@@ -1,0 +1,56 @@
+[package]
+name = "inky-frame-rust-image-loader"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+cortex-m = { version = "0.7.6", features = ["critical-section-single-core"] }
+cortex-m-rt = "0.7.1"
+defmt = "0.3.2"
+defmt-rtt = "0.4.0"
+embassy-executor = { git = "https://github.com/mdarrik/embassy", version = "0.1.0", features = [
+    "defmt",
+    "integrated-timers",
+] }
+embassy-futures = { git = "https://github.com/mdarrik/embassy", version = "0.1.0", features = [
+    "defmt",
+] }
+embassy-rp = { git = "https://github.com/mdarrik/embassy", version = "0.1.0", features = [
+    "defmt",
+    "unstable-traits",
+    "nightly",
+    "unstable-pac",
+    "time-driver",
+] }
+embassy-sync = { git = "htttps://github.com/mdarrik/embassy", version = "0.1.0", features = [
+    "defmt",
+] }
+embassy-time = { git = "htttps://github.com/mdarrik/embassy", version = "0.1.0", features = [
+    "defmt",
+    "defmt-timestamp-uptime",
+] }
+embedded-graphics = { git = "https://github.com/embedded-graphics/embedded-graphics", rev = "2e65f5c82c9718be3ebf20dc0fff3514d5dd9ae0", version = "0.7.1" }
+embedded-hal = "0.2.7"
+embedded-hal-async = "0.1.0-alpha.2"
+futures = { version = "0.3.17", default-features = false, features = [
+    "async-await",
+    "cfg-target-has-atomic",
+    "unstable",
+] }
+shared-bus = { version = "0.2.4", features = ["cortex-m"] }
+heapless = { version = "0.7.16", features = ["defmt"] }
+panic-probe = { version = "0.3", features = ["print-defmt"] }
+tinybmp = "0.4.0"
+inky-frame-rs = { version = "0.1.0", path = "../inky-frame-rs" }
+
+[patch."https://github.com/mdarrik/embassy"]
+embassy-rp = { path = "../../embassy-rs/embassy/embassy-rp" }
+embassy-executor = { path = "../../embassy-rs/embassy/embassy-executor" }
+
+
+[[bin]]
+name = "inky-frame-rust-image-loader"
+test = false
+bench = false
