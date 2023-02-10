@@ -3,6 +3,7 @@ name = "inky-frame-rust-image-loader"
 version = "0.1.0"
 edition = "2021"
 
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
@@ -33,24 +34,55 @@ embassy-time = { git = "htttps://github.com/mdarrik/embassy", version = "0.1.0",
 ] }
 embedded-graphics = { git = "https://github.com/embedded-graphics/embedded-graphics", rev = "2e65f5c82c9718be3ebf20dc0fff3514d5dd9ae0", version = "0.7.1" }
 embedded-hal = "0.2.7"
-embedded-hal-async = "0.1.0-alpha.2"
+embedded-hal-1 = { package = "embedded-hal", version = "1.0.0-alpha.9" }
+embedded-hal-async = "0.2.0-alpha.0"
 futures = { version = "0.3.17", default-features = false, features = [
     "async-await",
     "cfg-target-has-atomic",
     "unstable",
 ] }
+embassy-net-driver-channel = { git = "https://www.github.com/mdarrik/embassy", version = "0.1.0" }
 shared-bus = { version = "0.2.4", features = ["cortex-m"] }
 heapless = { version = "0.7.16", features = ["defmt"] }
 panic-probe = { version = "0.3", features = ["print-defmt"] }
 tinybmp = "0.4.0"
 inky-frame-rs = { version = "0.1.0", path = "../inky-frame-rs" }
+cyw43 = { git = "https://github.com/embassy-rs/cyw43", rev = "9900ac2c9a1e5c4ad2a30b2057f25cb19a27369b", version = "0.1.0", features = [
+    "defmt",
+] }
+embedded-io = { version = "0.4.0", features = ["async", "defmt"] }
+static_cell = "1.0.0"
+
+[features]
+include_firmware = []
+default = ["include_firmware"]
+
+[patch."crates-io"]
+embassy-net-driver-channel = { git = "https://www.github.com/mdarrik/embassy" }
 
 [patch."https://github.com/mdarrik/embassy"]
 embassy-rp = { path = "../../embassy-rs/embassy/embassy-rp" }
 embassy-executor = { path = "../../embassy-rs/embassy/embassy-executor" }
 
-
 [[bin]]
 name = "inky-frame-rust-image-loader"
 test = false
 bench = false
+
+[profile.dev]
+codegen-units = 1
+debug = 2
+debug-assertions = true
+incremental = false
+opt-level = 3
+overflow-checks = true
+
+# cargo build/run --release
+[profile.release]
+codegen-units = 1
+debug = 2
+debug-assertions = false
+incremental = false
+lto = 'fat'
+opt-level = 3
+overflow-checks = false
