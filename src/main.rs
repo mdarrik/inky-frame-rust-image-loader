@@ -4,33 +4,19 @@
 
 use defmt::*;
 use embassy_executor::Spawner;
-use embassy_rp::gpio::{Flex, Input, Level, Output, Pin};
+use embassy_rp::gpio::{Input, Level, Output, Pin};
 use embassy_rp::spi::{self, Spi};
 use embassy_time::{Duration, Timer};
 use {defmt_rtt as _, panic_probe as _};
 
-use embedded_graphics::pixelcolor::BinaryColor;
+use embedded_graphics::image::Image;
+use embedded_graphics::pixelcolor::Rgb888;
 use embedded_graphics::prelude::*;
-use embedded_graphics::primitives::{
-    Circle, PrimitiveStyle, PrimitiveStyleBuilder, Rectangle, StrokeAlignment, Triangle,
-};
-use embedded_graphics::text::{Alignment, Text};
-use embedded_graphics::{mono_font::ascii::FONT_5X7, mono_font::MonoTextStyle};
+use embedded_graphics::text::Text;
 use inky_frame_rs::display::color::OctColor;
-use inky_frame_rs::display::{Display5in65f, Epd5in65f, IsBusy, HEIGHT};
+use inky_frame_rs::display::{InkyFrame5_7, InkyFrameDisplay, IsBusy, HEIGHT, WIDTH};
 use inky_frame_rs::shift_register::InkyFrameShiftRegister;
-
-static THIN_STROKE: PrimitiveStyle<OctColor> = PrimitiveStyle::with_stroke(OctColor::Black, 1);
-static THICK_STROKE: PrimitiveStyle<OctColor> = PrimitiveStyle::with_stroke(OctColor::Black, 3);
-static BORDER_STROKE: PrimitiveStyle<OctColor> = PrimitiveStyleBuilder::new()
-    .stroke_color(OctColor::Black)
-    .stroke_width(3)
-    .stroke_alignment(StrokeAlignment::Inside)
-    .build();
-
-static FILL: PrimitiveStyle<OctColor> = PrimitiveStyle::with_fill(OctColor::Black);
-
-static YOFFSET: i32 = 14;
+use tinybmp::Bmp;
 
 #[embassy_executor::main]
 async fn main(_spawner: Spawner) {
@@ -59,24 +45,12 @@ async fn main(_spawner: Spawner) {
     let is_busy_bit = shift_register.read_register_bit(7).unwrap();
     let is_busy = shift_register.is_busy();
 
-    // let mut shift_register_clock_pin = Output::new(pico.PIN_8, Level::High);
-    // let mut shift_register_latch_pin = Output::new(pico.PIN_9, Level::Low);
-    // let shift_register_read_pin = Input::new(pico.PIN_10, embassy_rp::gpio::Pull::None);
-
-    // shift_register_latch_pin.set_low();
-    // Timer::after(Duration::from_millis(1)).await;
-    // shift_register_latch_pin.set_high();
-
-    // let mut result = 0u8;
-    // let mut bits =
-
     warn!("is busy {}; bit reading is {}", is_busy, is_busy_bit);
 
-    let mut e_ink_display = Display5in65f::default();
+    let mut e_ink_display = InkyFrameDisplay::default();
     warn!("creating e_ink_device");
-    debug!("HII");
 
-    let Ok(mut e_ink_device) = Epd5in65f::new(
+    let Ok(mut e_ink_device) = InkyFrame5_7::new(
         &mut spi_bus.acquire_spi(),
         Output::new(e_ink_cs, Level::High),
         Output::new(e_ink_dc, Level::Low),
@@ -89,105 +63,73 @@ async fn main(_spawner: Spawner) {
             Timer::after(Duration::from_secs(1)).await;
         }
     };
-    // let mut e_ink_device = Epd5in65f::new(
-    //     &mut spi_bus.acquire_spi(),
-    //     Output::new(e_ink_cs, Level::High),
-    //     Output::new(e_ink_dc, Level::Low),
-    //     Output::new(e_ink_reset, Level::Low),
-    //     &mut shift_register,
-    // )
-    // .unwrap();
 
     debug!("Clearing the frame");
 
+    e_ink_device.set_background_color(OctColor::Black);
     match e_ink_device.clear_frame(&mut spi_bus.acquire_spi(), &mut shift_register) {
         Ok(_) => debug!("Successfully cleared the frame"),
         Err(e) => error!("{}", e),
     }
 
-    // debug!("drawing a rectangle");
-    // e_ink_display
-    //     .fill_solid(
-    //         &Rectangle {
-    //             top_left: Point::new(0, 0),
-    //             size: Size::new(100, 100),
-    //         },
-    //         OctColor::Blue,
-    //     )
-    //     .unwrap();
+    let bmp_image = include_bytes!("../assets/party-corgi-happy-2.bmp");
 
-    // let character_style = MonoTextStyle::new(&FONT_5X7, OctColor::Black);
+    let bmp = Bmp::<Rgb888>::from_slice(bmp_image).unwrap();
 
-    // match
-    let x = Triangle::new(
-        Point::new(16, 16 + YOFFSET),
-        Point::new(16 + 16, 16 + YOFFSET),
-        Point::new(16 + 8, YOFFSET),
-    )
-    .into_styled(THIN_STROKE);
+    let style: embedded_graphics::primitives::PrimitiveStyle<OctColor> =
+        embedded_graphics::primitives::PrimitiveStyleBuilder::new()
+            .stroke_color(OctColor::Black)
+            .stroke_width(5)
+            .fill_color(OctColor::Black)
+            .build();
 
-// match e_ink_display.draw_iter(x.pixels()) {
-    //     Ok(_) => debug!("successfully drew pixels"),
-    //     Err(_) => debug!("Error drawing pixels"),
-    // };
-    
-    debug!(
-        "({}, {})",
-        x.bounding_box().center().x,
-        x.bounding_box().center().y
-    );
-    // let pixels = x.pixels();
-    // match x.draw(&mut e_ink_display) {
-    //     Ok(_) => info!("Successfully drew triangle"),
-    //     Err(e) => error!("{}", e),
-    // };
-    // .into_styled(THIN_STROKE)
-    // .draw(&mut e_ink_display) {
-    //     Ok(_) => info!("Successfully drew triangle"),
-    //     Err(e) => error!("{}", e)
-    // };
-    // //Draw a triangle.
-    // Triangle::new(
-    //     Point::new(16, 16 + YOFFSET),
-    //     Point::new(16 + 16, 16 + YOFFSET),
-    //     Point::new(16 + 8, YOFFSET),
-    // )
-    // .into_styled(THIN_STROKE)
-    // .draw(&mut e_ink_display)
-    // .unwrap();
-
-    // // Draw a filled square
-    // Rectangle::new(Point::new(52, YOFFSET), Size::new(16, 16))
-    //     .into_styled(FILL)
-    //     .draw(&mut e_ink_display)
-    //     .unwrap();
-
-    // // Draw a circle with a 3px wide stroke.
-    // Circle::new(Point::new(88, YOFFSET), 17)
-    //     .into_styled(THICK_STROKE)
-    //     .draw(&mut e_ink_display)
-    //     .unwrap();
-    // let width = i32::try_from(e_ink_device.width()).unwrap();
-    // let height = i32::try_from(e_ink_device.height()).unwrap();
-    // Text::with_alignment(
-    //     "Hi Rust",
-    //     Point::new(width / 2_i32, height / 2_i32) + Point::new(0, 15),
-    //     character_style,
-    //     Alignment::Center,
-    // )
-    // .draw(&mut e_ink_display)
-    // .unwrap();
-
-    // e_ink_device
-    //     .display_frame(&mut spi_bus.acquire_spi(), &mut shift_register)
-    //     .unwrap();
-    loop {
-        info!("led on!");
-        vsys.set_high();
-        Timer::after(Duration::from_secs(1)).await;
-
-        info!("led off!");
-        vsys.set_low();
-        Timer::after(Duration::from_secs(1)).await;
+    let rectangle = &embedded_graphics::primitives::Rectangle {
+        top_left: Point::new(0, 0),
+        size: Size {
+            width: WIDTH,
+            height: HEIGHT,
+        },
     }
+    .into_styled(style);
+
+    e_ink_display
+        .draw_iter(rectangle.pixels())
+        .unwrap_or_else(|_| {
+            defmt::error!("Error drawing rectangle");
+            ()
+        });
+
+    match Image::new(
+        &bmp,
+        Point::new(((WIDTH / 2) as i32) - 50, ((HEIGHT / 2) as i32) - 50),
+    )
+    .draw(&mut e_ink_display.color_converted())
+    {
+        Ok(_) => info!("Drew image to buffer"),
+        Err(_) => error!("Failed to draw image"),
+    }
+
+    Text::with_alignment(
+        "Hello!",
+        e_ink_display.bounding_box().bottom_right().unwrap() - Point::new((WIDTH / 2) as i32, 25),
+        embedded_graphics::mono_font::MonoTextStyle::new(
+            &embedded_graphics::mono_font::ascii::FONT_10X20,
+            OctColor::HiZ,
+        ),
+        embedded_graphics::text::Alignment::Center,
+    )
+    .draw(&mut e_ink_display)
+    .unwrap();
+
+    match e_ink_device.update_and_display_frame(
+        &mut spi_bus.acquire_spi(),
+        &mut shift_register,
+        e_ink_display.buffer(),
+    ) {
+        Ok(_) => info!("Drew image to screen"),
+        Err(_) => error!("Failed to draw image to screen"),
+    };
+    vsys.set_low();
+
+    loop {}
 }

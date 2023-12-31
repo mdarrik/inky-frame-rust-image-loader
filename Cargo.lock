@@ -460,11 +460,13 @@ dependencies = [
 
 [[package]]
 name = "embedded-graphics"
-version = "0.7.1"
-source = "git+https://github.com/embedded-graphics/embedded-graphics?rev=2e65f5c82c9718be3ebf20dc0fff3514d5dd9ae0#2e65f5c82c9718be3ebf20dc0fff3514d5dd9ae0"
+version = "0.8.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0649998afacf6d575d126d83e68b78c0ab0e00ca2ac7e9b3db11b4cbe8274ef0"
 dependencies = [
  "az",
  "byteorder",
+ "defmt",
  "embedded-graphics-core",
  "float-cmp",
  "micromath",
@@ -472,11 +474,13 @@ dependencies = [
 
 [[package]]
 name = "embedded-graphics-core"
-version = "0.3.3"
-source = "git+https://github.com/embedded-graphics/embedded-graphics?rev=2e65f5c82c9718be3ebf20dc0fff3514d5dd9ae0#2e65f5c82c9718be3ebf20dc0fff3514d5dd9ae0"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ba9ecd261f991856250d2207f6d8376946cd9f412a2165d3b75bc87a0bc7a044"
 dependencies = [
  "az",
  "byteorder",
+ "defmt",
 ]
 
 [[package]]
@@ -779,6 +783,7 @@ dependencies = [
  "panic-probe",
  "shared-bus",
  "static_cell",
+ "tinybmp",
 ]
 
 [[package]]
@@ -1365,6 +1370,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2c9d3793400a45f954c52e73d068316d76b6f4e36977e3fcebb13a2721e80237"
 dependencies = [
  "crunchy",
+]
+
+[[package]]
+name = "tinybmp"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "197cc000e382175ff15abd9c54c694ef80ef20cb07e7f956c71e3ea97fc8dc60"
+dependencies = [
+ "embedded-graphics",
 ]
 
 [[package]]
