@@ -28,6 +28,8 @@ async fn main(_spawner: Spawner) {
     let miso = pico.PIN_16;
     let clk = pico.PIN_18;
     let mosi = pico.PIN_19;
+    let mut led_activity = Output::new(pico.PIN_6, Level::Low);
+
     //keeps pico awake by turning on vsts
     let mut vsys = Output::new(pico.PIN_2, Level::High);
 
@@ -65,13 +67,13 @@ async fn main(_spawner: Spawner) {
     };
 
     debug!("Clearing the frame");
-
+    led_activity.set_high();
     e_ink_device.set_background_color(OctColor::Black);
     match e_ink_device.clear_frame(&mut spi_bus.acquire_spi(), &mut shift_register) {
         Ok(_) => debug!("Successfully cleared the frame"),
         Err(e) => error!("{}", e),
     }
-
+    led_activity.set_low();
     let bmp_image = include_bytes!("../assets/party-corgi-happy-2.bmp");
 
     let bmp = Bmp::<Rgb888>::from_slice(bmp_image).unwrap();
@@ -91,7 +93,7 @@ async fn main(_spawner: Spawner) {
         },
     }
     .into_styled(style);
-
+    led_activity.set_high();
     e_ink_display
         .draw_iter(rectangle.pixels())
         .unwrap_or_else(|_| {
@@ -129,7 +131,15 @@ async fn main(_spawner: Spawner) {
         Ok(_) => info!("Drew image to screen"),
         Err(_) => error!("Failed to draw image to screen"),
     };
+    led_activity.set_low();
     vsys.set_low();
 
-    loop {}
+    loop {
+        led_activity.set_high();
+        info!("LED High");
+        Timer::after(Duration::from_secs(10)).await;
+        led_activity.set_low();
+        info!("LED Low");
+        Timer::after(Duration::from_secs(10)).await;
+    }
 }
