@@ -5,28 +5,29 @@ edition = "2021"
 
 
 [dependencies]
-embassy-sync = { version = "0.1.0", git = "https://github.com/mdarrik/embassy", branch = "inky-frame-image-loader-v0", features = [
+embassy-sync = { version = "0.5.0", path = "../../embassy-rs/embassy/embassy-sync", features = [
     "defmt",
 ] }
-embassy-executor = { version = "0.1.0", git = "https://github.com/mdarrik/embassy", branch = "inky-frame-image-loader-v0", features = [
+embassy-executor = { version = "0.4.0", path = "../../embassy-rs/embassy/embassy-executor", features = [
+    "arch-cortex-m",
+    "executor-thread",
+    "executor-interrupt",
     "defmt",
     "integrated-timers",
+    "nightly"
 ] }
-embassy-time = { version = "0.1.0", git = "https://github.com/mdarrik/embassy", branch = "inky-frame-image-loader-v0", features = [
+embassy-time = { version = "0.2.0", path = "../../embassy-rs/embassy/embassy-time", features = [
     "defmt",
     "defmt-timestamp-uptime",
 ] }
-embassy-rp = { version = "0.1.0", git = "https://github.com/mdarrik/embassy", branch = "inky-frame-image-loader-v0", features = [
+embassy-rp = { version = "0.1.0", path = "../../embassy-rs/embassy/embassy-rp", features = [
     "defmt",
-    "unstable-traits",
-    "nightly",
     "unstable-pac",
     "time-driver",
-    "pio",
     "critical-section-impl",
 ] }
 
-embassy-futures = { version = "0.1.0", git = "https://github.com/mdarrik/embassy", branch = "inky-frame-image-loader-v0" }
+embassy-futures = { version = "^0.1.1", path = "../../embassy-rs/embassy/embassy-futures" }
 
 defmt = "0.3"
 defmt-rtt = "0.4"
@@ -43,15 +44,16 @@ futures = { version = "0.3.17", default-features = false, features = [
 embedded-graphics = { version = "0.8.1", features = ["defmt"] }
 shared-bus = { version = "0.2.4", features = ["cortex-m"] }
 embedded-hal = "0.2.7"
-embedded-hal-1 = { package = "embedded-hal", version = "=1.0.0-alpha.9" }
-embedded-hal-async = "0.2.0-alpha.0"
-inky-frame-rs = { version = "0.1.0", features = [
+embedded-hal-1 = { package = "embedded-hal", version = "=1.0.0" }
+embedded-hal-async = "1.0.0"
+inky-frame-rs = { version = "0.1.0", path = "../inky-frame-rs", features = [
     "defmt",
-], git = "https://github.com/mdarrik/inky-frame-rs"}
+] }
 embedded-io = { version = "0.4.0", features = ["async", "defmt"] }
 static_cell = "1.0.0"
 log = "0.4"
 tinybmp = "0.5.0"
+embedded-hal-bus = "0.1.0"
 
 [features]
 include_firmware = []

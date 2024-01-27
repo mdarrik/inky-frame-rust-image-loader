@@ -13,8 +13,9 @@ use embedded_graphics::image::Image;
 use embedded_graphics::pixelcolor::Rgb888;
 use embedded_graphics::prelude::*;
 use embedded_graphics::text::Text;
-use inky_frame_rs::display::color::OctColor;
-use inky_frame_rs::display::{InkyFrame5_7, InkyFrameDisplay, IsBusy, HEIGHT, WIDTH};
+use inky_frame_rs::display::{
+    color::OctColor, InkyFrame5_7, InkyFrameDisplay, IsBusy, HEIGHT, WIDTH,
+};
 use inky_frame_rs::shift_register::InkyFrameShiftRegister;
 use tinybmp::Bmp;
 
@@ -35,13 +36,18 @@ async fn main(_spawner: Spawner) {
 
     let mut config = spi::Config::default();
     config.frequency = 3_000_000;
-    let spi = Spi::new_blocking(pico.SPI0, clk, mosi, miso, config);
-    let spi_bus = shared_bus::BusManagerSimple::new(spi);
+    let spi = core::cell::RefCell::new(Spi::new_blocking(pico.SPI0, clk, mosi, miso, config));
+    let e_ink_cs = Output::new(e_ink_cs, Level::High);
+    info!("created e_ink_cs");
+
+    let inky_frame_spi =
+        embedded_hal_bus::spi::RefCellDevice::new(&spi, e_ink_cs, embassy_time::Delay);
 
     let mut shift_register = InkyFrameShiftRegister::new(
         Output::new(pico.PIN_8.degrade(), Level::High),
         Output::new(pico.PIN_9.degrade(), Level::Low),
         Input::new(pico.PIN_10, embassy_rp::gpio::Pull::None),
+        embassy_time::Delay,
     );
 
     let is_busy_bit = shift_register.read_register_bit(7).unwrap();
@@ -51,27 +57,29 @@ async fn main(_spawner: Spawner) {
 
     let mut e_ink_display = InkyFrameDisplay::default();
     warn!("creating e_ink_device");
+    info!("Created spi instance");
 
+    led_activity.set_high();
     let Ok(mut e_ink_device) = InkyFrame5_7::new(
-        &mut spi_bus.acquire_spi(),
-        Output::new(e_ink_cs, Level::High),
+        inky_frame_spi,
         Output::new(e_ink_dc, Level::Low),
         Output::new(e_ink_reset, Level::Low),
         &mut shift_register,
     ) else {
+        led_activity.set_low();
         error!("Failed to create device");
         loop {
             info!("looping around");
             Timer::after(Duration::from_secs(1)).await;
         }
     };
-
+    led_activity.set_low();
     debug!("Clearing the frame");
     led_activity.set_high();
     e_ink_device.set_background_color(OctColor::Black);
-    match e_ink_device.clear_frame(&mut spi_bus.acquire_spi(), &mut shift_register) {
+    match e_ink_device.clear_frame(&mut shift_register) {
         Ok(_) => debug!("Successfully cleared the frame"),
-        Err(e) => error!("{}", e),
+        Err(_) => error!("error clearing the frame"),
     }
     led_activity.set_low();
     let bmp_image = include_bytes!("../assets/party-corgi-happy-2.bmp");
@@ -123,11 +131,7 @@ async fn main(_spawner: Spawner) {
     .draw(&mut e_ink_display)
     .unwrap();
 
-    match e_ink_device.update_and_display_frame(
-        &mut spi_bus.acquire_spi(),
-        &mut shift_register,
-        e_ink_display.buffer(),
-    ) {
+    match e_ink_device.update_and_display_frame(&mut shift_register, e_ink_display.buffer()) {
         Ok(_) => info!("Drew image to screen"),
         Err(_) => error!("Failed to draw image to screen"),
     };
